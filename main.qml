@@ -14,10 +14,8 @@ ApplicationWindow {
     visible: true
     objectName: "window"
 
-//    property var mSearching: true
-//    property var mInstallMode: false
-    property var mSearching: false
-    property var mInstallMode: true
+    property var mSearching: true
+    property var mInstallMode: false
 
     MessageDialog {
         id: dlgInputProblems
@@ -97,6 +95,16 @@ ApplicationWindow {
 
             onClicked: {
                 controller.setOff()
+            }
+        }
+
+        Button {
+            Layout.fillWidth: true
+
+            text: "Ayarlar"
+
+            onClicked: {
+                mInstallMode = true
             }
         }
     }

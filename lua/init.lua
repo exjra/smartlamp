@@ -71,7 +71,7 @@ function connectWifi()
     wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, function(T)
         print("\n\tSTA - GOT IP".."\n\tStation IP: "..T.IP.."\n\tSubnet mask: "..
         T.netmask.."\n\tGateway IP: "..T.gateway)
-
+        mAPModeEnabled = false;
         startBroadcaster()
         startServer()
     end)
@@ -87,13 +87,13 @@ function connectWifi()
                 print("disconnected from wifi: "..T.reason)
                 mAPModeEnabled = true
                 startAPMode()
-            end            
-        elseif T.reason == 8 then
-            if mAPModeEnabled == false then 
-                print("disconnected from wifi: "..T.reason)
-                mAPModeEnabled = true
-                startAPMode()
             end
+        --elseif T.reason == 8 then
+        --    if mAPModeEnabled == false then 
+        --        print("disconnected from wifi: "..T.reason)
+        --        mAPModeEnabled = true
+        --        startAPMode()
+        --    end
         elseif T.reason == 15 then
             if mAPModeEnabled == false then 
                 print("disconnected from wifi: "..T.reason)
@@ -122,13 +122,28 @@ function startServer()
     function onClientDataReceived(pSocket, data)
         print(data)
         
-        if data == "1" then
-            driveOn()
-        elseif data == "0" then
-            driveOff()
-        elseif data == "2" then
-            print(data)
-        end 
+        local tParts = split(data, "#")
+
+        if table.getn(tParts) > 0 then
+            for i,line in ipairs(tParts) do
+               print("Part "..i.." : "..line)
+            end
+                
+            if tParts[1] == "1" then
+                driveOn()
+            elseif tParts[1] == "0" then
+                driveOff()
+            elseif tParts[1] == "2" then
+                if table.getn(tParts) > 2 then
+                    mSSID = tParts[2]
+                    mPass = tParts[3]
+
+                    saveConfig()
+
+                    node.restart()
+                end
+            end 
+        end
     end
 
     function onSocketDisconnected(pSocket)
@@ -159,6 +174,7 @@ function driveOff()
 end
 
 function startAPMode()
+    mAPModeEnabled = true;
     resetWifi()
     
     print("initializing for ap")
@@ -230,4 +246,25 @@ function loadConfig()
     else
         print("Configuration does not loaded!")
     end
+end
+
+function saveConfig()
+    if file.open("appconfig.dat", "w") then
+        file.write(mSSID.."\n")
+        file.write(mPass.."\n")
+        file.close()
+        
+        print("Saved new configuration.")
+    else
+        print("Configuration does not saved.")
+    end
+end
+
+function split(str, sep)
+   local result = {}
+   local regex = ("([^%s]+)"):format(sep)
+   for each in str:gmatch(regex) do
+      table.insert(result, each)
+   end
+   return result
 end
