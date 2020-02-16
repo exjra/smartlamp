@@ -1,4 +1,5 @@
 #include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QSettings>
@@ -14,7 +15,7 @@ int main(int argc, char *argv[])
 
     QSettings tSettings;
 
-    QGuiApplication a(argc, argv);
+    QApplication a(argc, argv);
 
     RController* tController = new RController();
     tController->init();

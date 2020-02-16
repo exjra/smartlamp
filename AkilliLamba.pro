@@ -1,5 +1,5 @@
 QT += core gui network
-QT += quick quickcontrols2
+QT += quick quickcontrols2 widgets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

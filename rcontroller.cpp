@@ -2,6 +2,7 @@
 
 #include <QDataStream>
 #include <QNetworkDatagram>
+#include <QTimer>
 
 RController::RController(QObject *parent) :
     QObject(parent)
@@ -14,6 +15,8 @@ RController::RController(QObject *parent) :
 
 void RController::init()
 {
+    mDeviceInAPMode = false;
+
     if(mBroadcastListener != nullptr)
     {
         mBroadcastListener->close();
@@ -45,7 +48,7 @@ void RController::onBroadcastDataReceived()
         mBroadcastData.append(tDatagram.data());
     }
 
-    if(mBroadcastData.length() >= 4)
+    if(mBroadcastData.length() >= 5)
     {
         if(mServerConfReceived)
         {
@@ -53,7 +56,7 @@ void RController::onBroadcastDataReceived()
             return;
         }
 
-        if(mBroadcastData.at(0) == 14 && mBroadcastData.at(3) == 53)
+        if(mBroadcastData.at(0) == 14 && mBroadcastData.at(4) == 53)
         {
             QDataStream tStream(&mBroadcastData, QIODevice::ReadOnly);
 
@@ -61,6 +64,11 @@ void RController::onBroadcastDataReceived()
 
             tStream >> tBuff;
             tStream >> mServerPort;
+            tStream >> tBuff;
+            if(tBuff == 0)
+                mDeviceInAPMode = false;
+            else
+                mDeviceInAPMode = true;
             tStream >> tBuff;
 
             mBroadcastData.clear();
@@ -83,7 +91,7 @@ void RController::onConnected()
 {
     qDebug() << "the client connected to server";
 
-    emit deviceFound();
+    emit deviceFound(mDeviceInAPMode);
 }
 
 void RController::onDisconnected()
@@ -120,4 +128,17 @@ void RController::setOff()
 {
     if(mSocket)
         mSocket->write("0");
+}
+
+void RController::sendConfig(QString pSSID, QString pPass)
+{
+    if(mSocket)
+    {
+        QString tMsg = "2#" + pSSID + "#" + pPass;
+        mSocket->write(tMsg.toUtf8());
+
+        QTimer::singleShot(3000, [=]{
+            emit restartApp();
+        });
+    }
 }
